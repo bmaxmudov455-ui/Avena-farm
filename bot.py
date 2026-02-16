@@ -1,23 +1,26 @@
 from telegram import Update
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
 import pandas as pd
 import os
 
+# Excel faylini o'qish
 df = pd.read_excel("dorilar.xlsx")
 
-def start(update: Update, context: CallbackContext):
-    update.message.reply_text(
+# /start komandasi uchun handler
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(
         "Salom! Men dorilar haqida ma'lumot beruvchi botman. "
         "Dorani nomini yozing va men sizga mavjudligi, narxi va retsepli/retsepsiz ekanligini aytaman."
     )
 
-def search_drug(update: Update, context: CallbackContext):
+# Dorani qidirish uchun handler
+async def search_drug(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_input = update.message.text.lower()
     
     match = df[df['Nomi'].str.lower() == user_input]
     
     if match.empty:
-        update.message.reply_text(f"Kechirasiz, {user_input} nomli dori topilmadi.")
+        await update.message.reply_text(f"Kechirasiz, {user_input} nomli dori topilmadi.")
     else:
         row = match.iloc[0]
         message = f"**{row['Nomi']}** dorisi mavjud!\n"
@@ -28,18 +31,18 @@ def search_drug(update: Update, context: CallbackContext):
         for i in range(1, 7):
             message += f"Filial {i}: {row[f'Filial{i}']} so'm\n"
         
-        update.message.reply_text(message)
+        await update.message.reply_text(message)
 
+# Botni ishga tushirish
 def main():
     TOKEN = os.environ.get("BOT_TOKEN")
-    updater = Updater(TOKEN, use_context=True)
     
-    dp = updater.dispatcher
-    dp.add_handler(CommandHandler("start", start))
-    dp.add_handler(MessageHandler(Filters.text & ~Filters.command, search_drug))
+    app = ApplicationBuilder().token(TOKEN).build()
     
-    updater.start_polling()
-    updater.idle()
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), search_drug))
+    
+    app.run_polling()
 
 if __name__ == "__main__":
     main()
