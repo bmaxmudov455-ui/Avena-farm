@@ -16,7 +16,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # Dorani qidirish uchun handler
 async def search_drug(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_input = update.message.text.lower()
-    
     match = df[df['Nomi'].str.lower() == user_input]
     
     if match.empty:
@@ -30,26 +29,23 @@ async def search_drug(update: Update, context: ContextTypes.DEFAULT_TYPE):
         message += "Filiallardagi narxlari:\n"
         for i in range(1, 7):
             message += f"Filial {i}: {row[f'Filial{i}']} so'm\n"
-        
         await update.message.reply_text(message)
 
-# Botni ishga tushirish (SYNC main, asyncio.run ishlatmasdan)
-def main():
+# Async main
+async def main():
     TOKEN = os.environ.get("BOT_TOKEN")
     bot = Bot(TOKEN)
 
-    # Eski webhook va pending updateslarni tozalash
-    # NOTE: bu sync ishlashi uchun run() ishlatiladi
-    bot.delete_webhook(drop_pending_updates=True)
+    # eski webhookni async o‘chirish
+    await bot.delete_webhook(drop_pending_updates=True)
 
-    # Application
     app = ApplicationBuilder().token(TOKEN).build()
-
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), search_drug))
 
-    # Polling ishga tushadi (sync)
-    app.run_polling()
+    # polling ishga tushadi
+    await app.run_polling()
 
 if __name__ == "__main__":
-    main()
+    import asyncio
+    asyncio.run(main())
