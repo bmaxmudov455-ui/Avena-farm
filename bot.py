@@ -1,5 +1,4 @@
 import os
-import asyncio
 import pandas as pd
 from telegram import Update, Bot
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
@@ -34,23 +33,23 @@ async def search_drug(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         await update.message.reply_text(message)
 
-# Async main funksiyasi
-async def main():
+# Botni ishga tushirish (SYNC main, asyncio.run ishlatmasdan)
+def main():
     TOKEN = os.environ.get("BOT_TOKEN")
     bot = Bot(TOKEN)
 
     # Eski webhook va pending updateslarni tozalash
-    await bot.delete_webhook(drop_pending_updates=True)
+    # NOTE: bu sync ishlashi uchun run() ishlatiladi
+    bot.delete_webhook(drop_pending_updates=True)
 
-    # Bot application
+    # Application
     app = ApplicationBuilder().token(TOKEN).build()
-    
+
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), search_drug))
 
-    # Polling ishga tushadi
-    await app.run_polling()
+    # Polling ishga tushadi (sync)
+    app.run_polling()
 
-# Async run
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
