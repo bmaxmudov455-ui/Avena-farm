@@ -6,18 +6,18 @@ from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, fil
 # Excel faylini o'qish
 df = pd.read_excel("dorilar.xlsx")
 
-# /start komandasi uchun handler
+# /start komandasi
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "Salom! Men dorilar haqida ma'lumot beruvchi botman. "
         "Dorani nomini yozing va men sizga mavjudligi, narxi va retsepli/retsepsiz ekanligini aytaman."
     )
 
-# Dorani qidirish uchun handler
+# Dorani qidirish
 async def search_drug(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_input = update.message.text.lower()
     match = df[df['Nomi'].str.lower() == user_input]
-    
+
     if match.empty:
         await update.message.reply_text(f"Kechirasiz, {user_input} nomli dori topilmadi.")
     else:
@@ -31,21 +31,16 @@ async def search_drug(update: Update, context: ContextTypes.DEFAULT_TYPE):
             message += f"Filial {i}: {row[f'Filial{i}']} so'm\n"
         await update.message.reply_text(message)
 
-# Async main
-async def main():
+# Main
+def main():
     TOKEN = os.environ.get("BOT_TOKEN")
-    bot = Bot(TOKEN)
-
-    # eski webhookni async o‘chirish
-    await bot.delete_webhook(drop_pending_updates=True)
 
     app = ApplicationBuilder().token(TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), search_drug))
 
-    # polling ishga tushadi
-    await app.run_polling()
+    # Start polling (sync)
+    app.run_polling(drop_pending_updates=True)
 
 if __name__ == "__main__":
-    import asyncio
-    asyncio.run(main())
+    main()
