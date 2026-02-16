@@ -1,7 +1,8 @@
-from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
-import pandas as pd
 import os
+import asyncio
+import pandas as pd
+from telegram import Update, Bot
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
 
 # Excel faylini o'qish
 df = pd.read_excel("dorilar.xlsx")
@@ -33,23 +34,23 @@ async def search_drug(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         await update.message.reply_text(message)
 
-# Botni ishga tushirish
-def main():
+# Async main funksiyasi
+async def main():
     TOKEN = os.environ.get("BOT_TOKEN")
-
-    # Eski webhook va getUpdateslarni tozalash
-    from telegram import Bot
     bot = Bot(TOKEN)
-    bot.delete_webhook(drop_pending_updates=True)
 
-    # Application
+    # Eski webhook va pending updateslarni tozalash
+    await bot.delete_webhook(drop_pending_updates=True)
+
+    # Bot application
     app = ApplicationBuilder().token(TOKEN).build()
-
+    
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), search_drug))
 
     # Polling ishga tushadi
-    app.run_polling()
+    await app.run_polling()
 
+# Async run
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
