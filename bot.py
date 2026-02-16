@@ -17,7 +17,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def search_drug(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_input = update.message.text.lower()
     
-    # 'Наименование' ustunini qidiramiz
     match = df[df['Наименование'].str.lower() == user_input]
     
     if match.empty:
@@ -28,6 +27,7 @@ async def search_drug(update: Update, context: ContextTypes.DEFAULT_TYPE):
         message += f"Narxi: {row['Цена']} so'm\n"
         message += f"Amal qilish muddati: {row['Срок годности']}\n"
         message += f"Ishlab chiqaruvchi: {row['Производитель']}\n"
+        message += f"Yetkazib berish sanasi: {row['Дата поставки']}\n"
         message += f"Yetkazib berish sanasi: {row['Дата поставки']}\n"
         await update.message.reply_text(message)
 
