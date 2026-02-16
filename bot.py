@@ -36,12 +36,19 @@ async def search_drug(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # Botni ishga tushirish
 def main():
     TOKEN = os.environ.get("BOT_TOKEN")
-    
+
+    # Eski webhook va getUpdateslarni tozalash
+    from telegram import Bot
+    bot = Bot(TOKEN)
+    bot.delete_webhook(drop_pending_updates=True)
+
+    # Application
     app = ApplicationBuilder().token(TOKEN).build()
-    
+
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), search_drug))
-    
+
+    # Polling ishga tushadi
     app.run_polling()
 
 if __name__ == "__main__":
