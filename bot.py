@@ -2,6 +2,7 @@ from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
 import pandas as pd
 import os
+import unicodedata
 
 # Excel faylini o'qish
 df = pd.read_excel("dorilar.xlsx")
@@ -14,18 +15,27 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 # Dorani qidirish
+
+
+def clean_text(text):
+    text = str(text).strip().lower()
+    text = unicodedata.normalize("NFKD", text)
+    return text
+
 async def search_drug(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_input = update.message.text.strip().lower()
+    user_input = clean_text(update.message.text)
 
-    df['Наименование'] = df['Наименование'].fillna("").astype(str)
+    df['clean_name'] = df['Наименование'].fillna("").apply(clean_text)
 
-    match = df[df['Наименование'].str.lower().str.contains(user_input, na=False)]
+    match = df[df['clean_name'].str.contains(user_input, na=False)]
 
     if match.empty:
-        await update.message.reply_text(f"Kechirasiz, '{user_input}' nomli dori topilmadi.")
+        await update.message.reply_text(
+            f"Kechirasiz, '{update.message.text}' nomli dori topilmadi."
+        )
     else:
         message = ""
-        for idx, row in match.iterrows():
+        for _, row in match.iterrows():
             message += f"{row['Наименование']} dorisi mavjud!\n"
             message += f"Narxi: {row['Цена']} so'm\n"
             message += f"Amal qilish muddati: {row['Срок годности']}\n"
