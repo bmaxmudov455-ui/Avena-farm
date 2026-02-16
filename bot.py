@@ -17,18 +17,21 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def search_drug(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_input = update.message.text.lower()
     
-    match = df[df['Наименование'].str.lower() == user_input]
+    # .str.contains() bilan qisman moslik
+    match = df[df['Наименование'].str.lower().str.contains(user_input, na=False)]
     
     if match.empty:
-        await update.message.reply_text(f"Kechirasiz, {user_input} nomli dori topilmadi.")
+        await update.message.reply_text(f"Kechirasiz, '{user_input}' nomli dori topilmadi.")
     else:
-        row = match.iloc[0]
-        message = f"**{row['Наименование']}** dorisi mavjud!\n"
-        message += f"Narxi: {row['Цена']} so'm\n"
-        message += f"Amal qilish muddati: {row['Срок годности']}\n"
-        message += f"Ishlab chiqaruvchi: {row['Производитель']}\n"
-        message += f"Yetkazib berish sanasi: {row['Дата поставки']}\n"
-        message += f"Yetkazib berish sanasi: {row['Дата поставки']}\n"
+        # Barcha mos kelgan dorilarni chiqarish
+        message = ""
+        for idx, row in match.iterrows():
+            message += f"**{row['Наименование']}** dorisi mavjud!\n"
+            message += f"Narxi: {row['Цена']} so'm\n"
+            message += f"Amal qilish muddati: {row['Срок годности']}\n"
+            message += f"Ishlab chiqaruvchi: {row['Производитель']}\n"
+            message += f"Yetkazib berish sanasi: {row['Дата поставки']}\n\n"
+        
         await update.message.reply_text(message)
 
 # Bot ishga tushishi
