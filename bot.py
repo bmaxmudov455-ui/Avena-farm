@@ -1,48 +1,37 @@
 import logging
+import pandas as pd
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
 
 TOKEN = "8394683131:AAEcjffaHaqHiLvIP7JrTzql0OQTTzx7Euo"
 
-# Filiallar bazasi (namuna)
-branches = {
-    "bam bozorchasi ": {
-        "address": "KIMYOGARLAR 44-A",
-        "phone": "+998 662250261",
-        "medicines": {
-            "sitramon": "15 000 so'm",
-            "traumel": "85 000 so'm"
-        }
-    },
-    "SOGDIANA": {
-        "address": "SOGDIANA ESKI BOVLING",
-        "phone": "+998 90 1003654",
-        "medicines": {
-            "sitramon": "14 500 so'm",
-            "traumel": "84 000 so'm"
-        }
-    }
-}
+# Excel faylini o'qish
+df = pd.read_excel("dorilar.xlsx")
+
+# Foydalanuvchi yozgan matnni qidirib, kerakli ustunlar bilan ishlash
+columns_to_use = ["№", "Nomi", "summa", "muddati", "davlati", "kelgan sanasi"]
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "💊 Assalomu alaykum!\n"
         "Avena Farm botiga xush kelibsiz.\n\n"
-        "Kerakli dorini nomini yozing."
+        "Kerakli dorining nomini yozing (masalan: shprist)."
     )
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_text = update.message.text.lower()
+    user_text = update.message.text.lower().strip()
     response = ""
 
-    for BAM in BOZORCHASI, branch_info in branches.items():
-        if user_text in branch_info["medicines"]:
-            price = branch_info["medicines"][user_text]
+    for index, row in df.iterrows():
+        if pd.notna(row["Nomi"]) and user_text in str(row["Nomi"]).lower():
+            # Faqat kerakli ustunlarni chiqarish
             response += (
-                f"🏥 Filial: {branch_name}\n"
-                f"💰 Narxi: {price}\n"
-                f"📍 Manzil: {branch_info['address']}\n"
-                f"📞 Tel: {branch_info['phone']}\n\n"
+                f"📌 №: {row['№']}\n"
+                f"💊 Nomi: {row['Nomi']}\n"
+                f"💰 Summa: {row['summa']}\n"
+                f"🗓 Muddati: {row['muddati']}\n"
+                f"🌍 Davlati: {row['davlati']}\n"
+                f"📅 Kelgan sanasi: {row['kelgan sanasi']}\n\n"
             )
 
     if response == "":
