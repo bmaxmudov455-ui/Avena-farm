@@ -1,60 +1,64 @@
+import logging
 from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
-import pandas as pd
-import os
-import unicodedata
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
 
-# Excel faylini o'qish
-df = pd.read_excel("dorilar.xlsx")
+TOKEN = "8394683131:AAEcjffaHaqHiLvIP7JrTzql0OQTTzx7Euo"
 
-# /start komandasi
+# Filiallar bazasi (namuna)
+branches = {
+    "bam bozorchasi ": {
+        "address": "KIMYOGARLAR 44-A",
+        "phone": "+998 662250261",
+        "medicines": {
+            "sitramon": "15 000 so'm",
+            "traumel": "85 000 so'm"
+        }
+    },
+    "SOGDIANA": {
+        "address": "SOGDIANA ESKI BOVLING",
+        "phone": "+998 90 1003654",
+        "medicines": {
+            "sitramon": "14 500 so'm",
+            "traumel": "84 000 so'm"
+        }
+    }
+}
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        "Salom! Men dorilar haqida ma'lumot beruvchi botman.\n"
-        "Dorani nomini yozing va men sizga mavjudligi, narxi va ishlab chiqaruvchisi va boshqa ma'lumotlarni aytaman."
+        "💊 Assalomu alaykum!\n"
+        "Avena Farm botiga xush kelibsiz.\n\n"
+        "Kerakli dorini nomini yozing."
     )
 
-# Dorani qidirish
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_text = update.message.text.lower()
+    response = ""
 
+    for BAM in BOZORCHASI, branch_info in branches.items():
+        if user_text in branch_info["medicines"]:
+            price = branch_info["medicines"][user_text]
+            response += (
+                f"🏥 Filial: {branch_name}\n"
+                f"💰 Narxi: {price}\n"
+                f"📍 Manzil: {branch_info['address']}\n"
+                f"📞 Tel: {branch_info['phone']}\n\n"
+            )
 
-def clean_text(text):
-    text = str(text).strip().lower()
-    text = unicodedata.normalize("NFKD", text)
-    return text
+    if response == "":
+        response = "❌ Bu dori hozircha mavjud emas.\nIltimos, boshqa nom bilan tekshirib ko‘ring."
 
-async def search_drug(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_input = clean_text(update.message.text)
+    await update.message.reply_text(response)
 
-    df['clean_name'] = df['Наименование'].fillna("").apply(clean_text)
-
-    match = df[df['clean_name'].str.contains(user_input, na=False)]
-
-    if match.empty:
-        await update.message.reply_text(
-            f"Kechirasiz, '{update.message.text}' nomli dori topilmadi."
-        )
-    else:
-        message = ""
-        for _, row in match.iterrows():
-            message += f"{row['Наименование']} dorisi mavjud!\n"
-            message += f"Narxi: {row['Цена']} so'm\n"
-            message += f"Amal qilish muddati: {row['Срок годности']}\n"
-            message += f"Ishlab chiqaruvchi: {row['Производитель']}\n"
-            message += f"Yetkazib berish sanasi: {row['Дата поставки']}\n\n"
-
-        await update.message.reply_text(message)
-
-# Bot ishga tushishi
 def main():
-    # Tokenni to'g'ridan-to'g'ri qo'ying yoki atrof-muhitdan oling
-    TOKEN = os.environ.get("BOT_TOKEN") or "SIZNING_TOKENINGIZ_SHU YERGA"
-    
+    logging.basicConfig(level=logging.INFO)
     app = ApplicationBuilder().token(TOKEN).build()
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), search_drug))
-    
-    # Polling boshlanadi
-    app.run_polling(drop_pending_updates=True)
 
-if __name__ == "__main__":
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+
+    print("Bot ishga tushdi...")
+    app.run_polling()
+
+if name == "main":
     main()

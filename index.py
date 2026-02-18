@@ -2,7 +2,7 @@ from telegram import Bot
 import asyncio
 import os
 
-TOKEN = os.environ.get("BOT_TOKEN")
+TOKEN = os.environ.get("8394683131:AAEcjffaHaqHiLvIP7JrTzql0OQTTzx7Euo")
 bot = Bot(TOKEN)
 
 async def cleanup():
